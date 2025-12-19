@@ -114,9 +114,10 @@ export default function AdminPromotionsPage() {
                 setEditing(null);
                 setFormData({
                   title: "",
-                  slug: "",
+                  url: "",
                   blurb: "",
                   imageUrl: "",
+                  ctaLabel: "",
                   active: true,
                 });
               }}>

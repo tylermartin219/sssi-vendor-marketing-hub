@@ -377,9 +377,8 @@ export default function AdminPOTMPage() {
                                       newMonthKey
                                     );
                                     setTimeout(() => {
-                                      document
-                                        .querySelector('[role="dialog"] button')
-                                        ?.click();
+                                      const closeButton = document.querySelector('[role="dialog"] button') as HTMLButtonElement | null;
+                                      closeButton?.click();
                                     }, 100);
                                   }}
                                 />

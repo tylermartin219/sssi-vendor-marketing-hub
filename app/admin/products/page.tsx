@@ -35,8 +35,10 @@ export default function AdminProductsPage() {
     name: "",
     category: "",
     description: "",
-    images: [] as string[],
+    imageUrl: "",
     coBrandingNotes: "",
+    price: "",
+    quantity: "",
     active: true,
   });
 
@@ -70,8 +72,10 @@ export default function AdminProductsPage() {
         name: "",
         category: "",
         description: "",
-        images: [],
+        imageUrl: "",
         coBrandingNotes: "",
+        price: "",
+        quantity: "",
         active: true,
       });
       loadProducts();
@@ -83,16 +87,19 @@ export default function AdminProductsPage() {
     fetch(`/api/products/${product.id}`)
       .then((res) => res.json())
       .then((data) => {
-        let images: string[] = [];
+        let imageUrl = "";
         try {
-          images = JSON.parse(data.imagesJson || "[]");
+          const images = JSON.parse(data.imagesJson || "[]");
+          imageUrl = images[0] || "";
         } catch (e) {}
         setFormData({
           name: data.name,
           category: data.category,
           description: data.description,
-          images,
+          imageUrl,
           coBrandingNotes: data.coBrandingNotes || "",
+          price: data.price?.toString() || "",
+          quantity: data.quantity?.toString() || "",
           active: data.active,
         });
         setOpen(true);
@@ -173,6 +180,46 @@ export default function AdminProductsPage() {
                     required
                     rows={4}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl">Image URL</Label>
+                  <Input
+                    id="imageUrl"
+                    type="url"
+                    value={formData.imageUrl}
+                    onChange={(e) =>
+                      setFormData({ ...formData, imageUrl: e.target.value })
+                    }
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Individual Price ($)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                    placeholder="3.71"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Quantity (for bulk pricing)</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) =>
+                      setFormData({ ...formData, quantity: e.target.value })
+                    }
+                    placeholder="100"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This is the quantity the price is based on (e.g., $3.71 each for 100 qty)
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="coBrandingNotes">Co-Branding Notes</Label>

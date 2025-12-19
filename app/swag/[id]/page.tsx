@@ -21,6 +21,8 @@ interface Product {
   description: string;
   imagesJson: string;
   coBrandingNotes: string | null;
+  price: number | null;
+  quantity: number | null;
   active: boolean;
 }
 
@@ -28,7 +30,6 @@ export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -52,7 +53,7 @@ export default function ProductDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId: product.id,
-          quantity,
+          quantity: product.quantity || 1,
           notes,
         }),
       });
@@ -91,9 +92,10 @@ export default function ProductDetailPage() {
     );
   }
 
-  let images: string[] = [];
+  let imageUrl = "";
   try {
-    images = JSON.parse(product.imagesJson || "[]");
+    const images = JSON.parse(product.imagesJson || "[]");
+    imageUrl = images[0] || "";
   } catch (e) {
     // Invalid JSON
   }
@@ -112,10 +114,10 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Images */}
           <div>
-            {images[0] ? (
+            {imageUrl ? (
               <div className="relative h-96 w-full rounded-2xl overflow-hidden">
                 <Image
-                  src={images[0]}
+                  src={imageUrl}
                   alt={product.name}
                   fill
                   className="object-cover"
@@ -138,6 +140,31 @@ export default function ProductDetailPage() {
               <p className="text-lg text-muted-foreground">{product.description}</p>
             </div>
 
+            {product.price && product.quantity && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pricing</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-lg">
+                      <span className="font-semibold">${product.price.toFixed(2)}</span> each
+                      {product.quantity > 1 && (
+                        <span className="text-muted-foreground">
+                          {" "}for {product.quantity} qty
+                        </span>
+                      )}
+                    </p>
+                    {product.quantity > 1 && (
+                      <p className="text-2xl font-bold text-primary">
+                        Total: ${(product.price * product.quantity).toFixed(2)}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {product.coBrandingNotes && (
               <Card>
                 <CardHeader>
@@ -158,24 +185,19 @@ export default function ProductDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantity</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (logo placement, customization, etc.)</Label>
+                  <Label htmlFor="notes">Notes (logo placement, customization, quantity changes, etc.)</Label>
                   <Textarea
                     id="notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Any special requirements or notes..."
+                    placeholder="Any special requirements, quantity changes, or notes..."
                     rows={4}
                   />
+                  {product.quantity && (
+                    <p className="text-xs text-muted-foreground">
+                      Default quantity: {product.quantity}. If you need a different quantity, please specify in the notes above.
+                    </p>
+                  )}
                 </div>
                 <Button
                   onClick={handleAddToQuote}
@@ -189,6 +211,16 @@ export default function ProductDetailPage() {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        <div className="mt-12 pt-8 border-t">
+          <Card className="bg-muted/50">
+            <CardContent className="pt-6">
+              <p className="text-sm text-muted-foreground text-center">
+                <strong>Disclaimer:</strong> Prices are estimates and subject to change; images may not be exact, as we may need to choose a different vendor from time to time for price; expect fluctuations; individual pricing changes based on qty. If you want a different quantity than what's listed, put that in the notes.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </main>
       <Footer />

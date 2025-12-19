@@ -20,8 +20,10 @@ export async function PUT(
         name: data.name,
         category: data.category,
         description: data.description,
-        imagesJson: JSON.stringify(data.images || []),
+        imagesJson: data.imageUrl ? JSON.stringify([data.imageUrl]) : "[]",
         coBrandingNotes: data.coBrandingNotes || null,
+        price: data.price ? parseFloat(data.price) : null,
+        quantity: data.quantity ? parseInt(data.quantity) : null,
         active: data.active ?? true,
       },
     });

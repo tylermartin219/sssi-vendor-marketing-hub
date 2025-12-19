@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String?  // hashed password for credentials auth
+  role      String   @default("vendor") // "vendor" | "admin"
+  company   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quotes          Quote[]
+  potmApplications POTMApplication[]
+}
+
+model Promotion {
+  id         String   @id @default(cuid())
+  title      String
+  url        String   // Can be internal path, external URL, or download link
+  blurb      String
+  imageUrl   String?
+  contentJson String  @default("{}") // JSON for sections: overview, howItWorks, timeline
+  active     Boolean  @default(true)
+  startDate  DateTime?
+  endDate    DateTime?
+  ctaLabel   String?  // Customizable CTA button text (e.g., "Learn More", "Download Now")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  name            String
+  category        String
+  description     String
+  imagesJson      String   @default("[]") // JSON array of image URLs
+  coBrandingNotes String?
+  price           Float?   // Price per unit
+  quantity        Int?     // Quantity for the price (e.g., 100)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  quoteItems QuoteItem[]
+}
+
+model Quote {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String?  // Quote name/identifier
+  status    String   @default("pending") // "pending" | "submitted" | "approved" | "rejected"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items QuoteItem[]
+}
+
+model QuoteItem {
+  id        String   @id @default(cuid())
+  quoteId   String
+  productId String
+  qty       Int      @default(1)
+  notes     String?
+
+  quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model POTMMonth {
+  id           String   @id @default(cuid())
+  monthKey     String   @unique // "YYYY-MM"
+  status       String   @default("open") // "open" | "reserved"
+  reservedLabel String? // Optional vendor/product name to show
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model POTMApplication {
+  id           String   @id @default(cuid())
+  userId       String
+  monthKey     String   // "YYYY-MM"
+  companyName  String
+  contactName  String
+  contactEmail String
+  productName  String
+  description  String
+  category     String?
+  link         String?
+  notes        String?
+  status       String   @default("pending") // "pending" | "approved" | "rejected"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Asset {
+  id          String   @id @default(cuid())
+  title       String
+  category    String   // "Logos" | "Guidelines" | "Templates" | "Product Images"
+  description String?
+  fileUrl     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  description String?
+  url         String?  // External link
+  fileUrl     String?  // File download
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HomeContent {
+  id        String   @id @default(cuid())
+  heroTitle String
+  heroText  String
+  updatedAt DateTime @updatedAt
+}
+

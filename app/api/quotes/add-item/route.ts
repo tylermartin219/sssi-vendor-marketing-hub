@@ -12,6 +12,7 @@ export async function POST(request: Request) {
 
     const userId = (session.user as any).id;
     const { productId, quantity, notes } = await request.json();
+    const qty = parseInt(quantity) || 1;
 
     // Find or create a pending quote
     let quote = await prisma.quote.findFirst({
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
       data: {
         quoteId: quote.id,
         productId,
-        quantity: parseInt(quantity) || 1,
+        qty,
         notes: notes || null,
       },
     });

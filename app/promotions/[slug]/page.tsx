@@ -11,8 +11,8 @@ export default async function PromotionDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const promotion = await prisma.promotion.findUnique({
-    where: { slug: params.slug },
+  const promotion = await prisma.promotion.findFirst({
+    where: { url: params.slug },
   });
 
   if (!promotion) {
@@ -94,10 +94,10 @@ export default async function PromotionDetailPage({
             </Card>
           )}
 
-          {promotion.ctaUrl && promotion.ctaLabel && (
+          {promotion.url && promotion.ctaLabel && (
             <div className="mt-8">
               <Button asChild size="lg">
-                <Link href={promotion.ctaUrl}>{promotion.ctaLabel}</Link>
+                <Link href={promotion.url}>{promotion.ctaLabel}</Link>
               </Button>
             </div>
           )}

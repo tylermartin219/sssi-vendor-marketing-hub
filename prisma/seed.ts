@@ -7,23 +7,27 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   // Create companies
-  const ssCompany = await prisma.company.upsert({
-    where: { id: "seed-sssi-company" },
-    update: {},
-    create: {
-      id: "seed-sssi-company",
-      name: "SS&Si",
-    },
+  let ssCompany = await prisma.company.findFirst({
+    where: { name: "SS&Si" },
   });
+  if (!ssCompany) {
+    ssCompany = await prisma.company.create({
+      data: {
+        name: "SS&Si",
+      },
+    });
+  }
 
-  const exampleCompany = await prisma.company.upsert({
-    where: { id: "seed-example-company" },
-    update: {},
-    create: {
-      id: "seed-example-company",
-      name: "Example Company",
-    },
+  let exampleCompany = await prisma.company.findFirst({
+    where: { name: "Example Company" },
   });
+  if (!exampleCompany) {
+    exampleCompany = await prisma.company.create({
+      data: {
+        name: "Example Company",
+      },
+    });
+  }
   console.log("✅ Created companies");
 
   // Create admin user

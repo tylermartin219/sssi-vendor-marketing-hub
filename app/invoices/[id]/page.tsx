@@ -26,14 +26,15 @@ interface Invoice {
   id: string;
   invoiceNumber: string;
   invoiceDate: string;
-  dueDate?: string | null;
-  billingAddress: string;
   notes?: string | null;
   total: number;
-  user: {
-    name: string | null;
-    email: string;
-    company: string | null;
+  company: {
+    name: string;
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    country?: string | null;
   };
   items: InvoiceItem[];
 }
@@ -91,7 +92,6 @@ export default function InvoiceDetailPage() {
     );
   }
 
-  const billingAddress = JSON.parse(invoice.billingAddress || "{}");
   const formatCurrency = (amount: number) => {
     return `$${amount.toFixed(2)}`;
   };
@@ -133,14 +133,6 @@ export default function InvoiceDetailPage() {
                     {new Date(invoice.invoiceDate).toLocaleDateString()}
                   </p>
                 </div>
-                {invoice.dueDate && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Due Date</p>
-                    <p className="font-semibold">
-                      {new Date(invoice.dueDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
                 <div>
                   <p className="text-sm text-muted-foreground">Total</p>
                   <p className="text-2xl font-bold text-primary">
@@ -155,21 +147,16 @@ export default function InvoiceDetailPage() {
                 <CardTitle>Bill To</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <p className="font-semibold">
-                  {invoice.user.company || invoice.user.name || invoice.user.email}
-                </p>
-                {invoice.user.name && invoice.user.company && (
-                  <p>{invoice.user.name}</p>
-                )}
-                {billingAddress.street && <p>{billingAddress.street}</p>}
-                {billingAddress.city && (
+                <p className="font-semibold">{invoice.company.name}</p>
+                {invoice.company.street && <p>{invoice.company.street}</p>}
+                {invoice.company.city && (
                   <p>
-                    {billingAddress.city}
-                    {billingAddress.state && `, ${billingAddress.state}`}
-                    {billingAddress.zip && ` ${billingAddress.zip}`}
+                    {invoice.company.city}
+                    {invoice.company.state && `, ${invoice.company.state}`}
+                    {invoice.company.zip && ` ${invoice.company.zip}`}
                   </p>
                 )}
-                {billingAddress.country && <p>{billingAddress.country}</p>}
+                {invoice.company.country && <p>{invoice.company.country}</p>}
               </CardContent>
             </Card>
           </div>

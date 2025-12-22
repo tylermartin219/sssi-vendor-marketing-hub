@@ -16,22 +16,13 @@ export async function GET(
     const invoice = await prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
-        user: {
+        company: {
           select: {
+            id: true,
             name: true,
-            email: true,
-            company: true,
           },
         },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        items: true,
         quote: {
           select: {
             id: true,
@@ -67,10 +58,8 @@ export async function PUT(
 
     const body = await request.json();
     const {
-      userId,
+      companyId,
       invoiceDate,
-      dueDate,
-      billingAddress,
       notes,
       items,
     } = body;
@@ -89,15 +78,12 @@ export async function PUT(
     const invoice = await prisma.invoice.update({
       where: { id: params.id },
       data: {
-        userId,
+        companyId,
         invoiceDate: invoiceDate ? new Date(invoiceDate) : undefined,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        billingAddress: JSON.stringify(billingAddress || {}),
         notes: notes || null,
         total,
         items: {
           create: items.map((item: any) => ({
-            productId: item.productId || null,
             description: item.description,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -107,22 +93,13 @@ export async function PUT(
         },
       },
       include: {
-        user: {
+        company: {
           select: {
+            id: true,
             name: true,
-            email: true,
-            company: true,
           },
         },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        items: true,
       },
     });
 

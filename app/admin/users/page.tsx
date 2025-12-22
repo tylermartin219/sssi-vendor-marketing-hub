@@ -24,12 +24,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface Company {
+  id: string;
+  name: string;
+}
+
 interface User {
   id: string;
   name: string | null;
   email: string;
   role: string;
-  company: string | null;
+  company: Company | null;
   createdAt: string;
   _count: {
     quotes: number;
@@ -39,6 +44,7 @@ interface User {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [editing, setEditing] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -46,17 +52,24 @@ export default function AdminUsersPage() {
     email: "",
     password: "",
     role: "vendor",
-    company: "",
+    companyId: "",
   });
 
   useEffect(() => {
     loadUsers();
+    loadCompanies();
   }, []);
 
   const loadUsers = async () => {
     const res = await fetch("/api/admin/users");
     const data = await res.json();
     setUsers(data);
+  };
+
+  const loadCompanies = async () => {
+    const res = await fetch("/api/admin/companies");
+    const data = await res.json();
+    setCompanies(data);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +93,7 @@ export default function AdminUsersPage() {
         email: "",
         password: "",
         role: "vendor",
-        company: "",
+        companyId: "",
       });
       loadUsers();
     } else {
@@ -96,7 +109,7 @@ export default function AdminUsersPage() {
       email: user.email,
       password: "", // Don't pre-fill password
       role: user.role,
-      company: user.company || "",
+      companyId: user.company?.id || "",
     });
     setOpen(true);
   };
@@ -132,13 +145,13 @@ export default function AdminUsersPage() {
               setOpen(isOpen);
               if (!isOpen) {
                 setEditing(null);
-                setFormData({
-                  name: "",
-                  email: "",
-                  password: "",
-                  role: "vendor",
-                  company: "",
-                });
+                  setFormData({
+                    name: "",
+                    email: "",
+                    password: "",
+                    role: "vendor",
+                    companyId: "",
+                  });
               }
             }}
           >
@@ -215,14 +228,25 @@ export default function AdminUsersPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    value={formData.company}
-                    onChange={(e) =>
-                      setFormData({ ...formData, company: e.target.value })
+                  <Label htmlFor="companyId">Company</Label>
+                  <Select
+                    value={formData.companyId}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, companyId: value })
                     }
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select company (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No company</SelectItem>
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button type="submit" className="w-full">
                   {editing ? "Update User" : "Create User"}
@@ -251,7 +275,7 @@ export default function AdminUsersPage() {
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                     {user.company && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        {user.company}
+                        {user.company.name}
                       </p>
                     )}
                     <div className="flex gap-4 mt-2 text-xs text-muted-foreground">

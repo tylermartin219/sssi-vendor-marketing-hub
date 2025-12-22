@@ -38,22 +38,13 @@ export async function GET() {
 
     const invoices = await prisma.invoice.findMany({
       include: {
-        user: {
+        company: {
           select: {
+            id: true,
             name: true,
-            email: true,
-            company: true,
           },
         },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        items: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -79,11 +70,9 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const {
-      userId,
+      companyId,
       quoteId,
       invoiceDate,
-      dueDate,
-      billingAddress,
       notes,
       items,
     } = body;
@@ -101,16 +90,13 @@ export async function POST(request: Request) {
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNumber,
-        userId,
+        companyId,
         quoteId: quoteId || null,
         invoiceDate: invoiceDate ? new Date(invoiceDate) : new Date(),
-        dueDate: dueDate ? new Date(dueDate) : null,
-        billingAddress: JSON.stringify(billingAddress || {}),
         notes: notes || null,
         total,
         items: {
           create: items.map((item: any) => ({
-            productId: item.productId || null,
             description: item.description,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -120,22 +106,13 @@ export async function POST(request: Request) {
         },
       },
       include: {
-        user: {
+        company: {
           select: {
+            id: true,
             name: true,
-            email: true,
-            company: true,
           },
         },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        items: true,
       },
     });
 

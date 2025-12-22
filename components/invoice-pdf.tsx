@@ -135,20 +135,20 @@ interface InvoiceItem {
 interface InvoiceData {
   invoiceNumber: string;
   invoiceDate: string;
-  dueDate?: string | null;
-  user: {
-    name: string | null;
-    email: string;
-    company: string | null;
+  company: {
+    name: string;
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    country?: string | null;
   };
-  billingAddress: string;
   items: InvoiceItem[];
   total: number;
   notes?: string | null;
 }
 
 export function InvoicePDF({ invoice }: { invoice: InvoiceData }) {
-  const billingAddress = JSON.parse(invoice.billingAddress || "{}");
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
@@ -172,33 +172,22 @@ export function InvoicePDF({ invoice }: { invoice: InvoiceData }) {
               <Text style={styles.value}>{invoice.invoiceNumber}</Text>
               <Text style={styles.label}>Invoice Date:</Text>
               <Text style={styles.value}>{formatDate(invoice.invoiceDate)}</Text>
-              {invoice.dueDate && (
-                <>
-                  <Text style={styles.label}>Due Date:</Text>
-                  <Text style={styles.value}>{formatDate(invoice.dueDate)}</Text>
-                </>
-              )}
             </View>
             <View style={styles.infoColumn}>
               <Text style={styles.label}>Bill To:</Text>
-              <Text style={styles.value}>
-                {invoice.user.company || invoice.user.name || invoice.user.email}
-              </Text>
-              {invoice.user.name && invoice.user.company && (
-                <Text style={styles.value}>{invoice.user.name}</Text>
+              <Text style={styles.value}>{invoice.company.name}</Text>
+              {invoice.company.street && (
+                <Text style={styles.value}>{invoice.company.street}</Text>
               )}
-              {billingAddress.street && (
-                <Text style={styles.value}>{billingAddress.street}</Text>
-              )}
-              {billingAddress.city && (
+              {invoice.company.city && (
                 <Text style={styles.value}>
-                  {billingAddress.city}
-                  {billingAddress.state && `, ${billingAddress.state}`}
-                  {billingAddress.zip && ` ${billingAddress.zip}`}
+                  {invoice.company.city}
+                  {invoice.company.state && `, ${invoice.company.state}`}
+                  {invoice.company.zip && ` ${invoice.company.zip}`}
                 </Text>
               )}
-              {billingAddress.country && (
-                <Text style={styles.value}>{billingAddress.country}</Text>
+              {invoice.company.country && (
+                <Text style={styles.value}>{invoice.company.country}</Text>
               )}
             </View>
           </View>

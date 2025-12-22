@@ -36,13 +36,17 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { quoteId, invoiceDate, dueDate, billingAddress, notes } = body;
+    const { quoteId, invoiceDate, notes } = body;
 
-    // Fetch the quote with items and user
+    // Fetch the quote with items and user (with company)
     const quote = await prisma.quote.findUnique({
       where: { id: quoteId },
       include: {
-        user: true,
+        user: {
+          include: {
+            company: true,
+          },
+        },
         items: {
           include: {
             product: true,
@@ -55,6 +59,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Quote not found" }, { status: 404 });
     }
 
+    if (!quote.user.companyId) {
+      return NextResponse.json(
+        { error: "Quote user must be associated with a company" },
+        { status: 400 }
+      );
+    }
+
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber();
 
@@ -65,7 +76,6 @@ export async function POST(request: Request) {
       const total = unitPrice * quantity;
 
       return {
-        productId: item.productId,
         description: item.product.name,
         quantity,
         unitPrice,
@@ -80,16 +90,13 @@ export async function POST(request: Request) {
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNumber,
-        userId: quote.userId,
+        companyId: quote.user.companyId,
         quoteId: quote.id,
         invoiceDate: invoiceDate ? new Date(invoiceDate) : new Date(),
-        dueDate: dueDate ? new Date(dueDate) : null,
-        billingAddress: JSON.stringify(billingAddress || {}),
         notes: notes || null,
         total,
         items: {
           create: invoiceItems.map((item) => ({
-            productId: item.productId,
             description: item.description,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -99,22 +106,13 @@ export async function POST(request: Request) {
         },
       },
       include: {
-        user: {
+        company: {
           select: {
+            id: true,
             name: true,
-            email: true,
-            company: true,
           },
         },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        items: true,
       },
     });
 

@@ -28,7 +28,6 @@ import {
 
 interface InvoiceItem {
   id?: string;
-  productId?: string | null;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -40,48 +39,39 @@ interface Invoice {
   id: string;
   invoiceNumber: string;
   invoiceDate: string;
-  dueDate?: string | null;
   total: number;
-  user: {
-    name: string | null;
-    email: string;
-    company: string | null;
+  company: {
+    id: string;
+    name: string;
   };
 }
 
-interface User {
+interface Company {
   id: string;
-  name: string | null;
-  email: string;
-  company: string | null;
+  name: string;
+  street: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  country: string | null;
 }
 
 export default function AdminInvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [editing, setEditing] = useState<Invoice | null>(null);
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
-    userId: "",
+    companyId: "",
     quoteId: "",
     invoiceDate: new Date().toISOString().split("T")[0],
-    dueDate: "",
-    billingAddress: {
-      street: "",
-      city: "",
-      state: "",
-      zip: "",
-      country: "",
-    },
     notes: "",
     items: [] as InvoiceItem[],
   });
 
   useEffect(() => {
     loadInvoices();
-    loadUsers();
-    loadProducts();
+    loadCompanies();
   }, []);
 
   const loadInvoices = async () => {
@@ -90,16 +80,10 @@ export default function AdminInvoicesPage() {
     setInvoices(data);
   };
 
-  const loadUsers = async () => {
-    const res = await fetch("/api/admin/users");
+  const loadCompanies = async () => {
+    const res = await fetch("/api/admin/companies");
     const data = await res.json();
-    setUsers(data);
-  };
-
-  const loadProducts = async () => {
-    const res = await fetch("/api/products");
-    const data = await res.json();
-    setProducts(data);
+    setCompanies(data);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,10 +96,7 @@ export default function AdminInvoicesPage() {
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...formData,
-        dueDate: formData.dueDate || null,
-      }),
+      body: JSON.stringify(formData),
     });
 
     if (res.ok) {
@@ -130,27 +111,14 @@ export default function AdminInvoicesPage() {
     const res = await fetch(`/api/admin/invoices/${invoice.id}`);
     const data = await res.json();
     
-    const billingAddress = JSON.parse(data.billingAddress || "{}");
-    
     setEditing(data);
     setFormData({
-      userId: data.userId,
+      companyId: data.companyId,
       quoteId: data.quoteId || "",
       invoiceDate: new Date(data.invoiceDate).toISOString().split("T")[0],
-      dueDate: data.dueDate
-        ? new Date(data.dueDate).toISOString().split("T")[0]
-        : "",
-      billingAddress: {
-        street: billingAddress.street || "",
-        city: billingAddress.city || "",
-        state: billingAddress.state || "",
-        zip: billingAddress.zip || "",
-        country: billingAddress.country || "",
-      },
       notes: data.notes || "",
       items: data.items.map((item: any) => ({
         id: item.id,
-        productId: item.productId,
         description: item.description,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
@@ -169,17 +137,9 @@ export default function AdminInvoicesPage() {
 
   const resetForm = () => {
     setFormData({
-      userId: "",
+      companyId: "",
       quoteId: "",
       invoiceDate: new Date().toISOString().split("T")[0],
-      dueDate: "",
-      billingAddress: {
-        street: "",
-        city: "",
-        state: "",
-        zip: "",
-        country: "",
-      },
       notes: "",
       items: [],
     });
@@ -195,7 +155,7 @@ export default function AdminInvoicesPage() {
           quantity: 1,
           unitPrice: 0,
           total: 0,
-          notes: "",
+          notes: null,
         },
       ],
     });
@@ -220,18 +180,7 @@ export default function AdminInvoicesPage() {
     setFormData({ ...formData, items: newItems });
   };
 
-  const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      const unitPrice = product.price || 0;
-      const quantity = product.quantity || 1;
-      updateItem(index, "productId", productId);
-      updateItem(index, "description", product.name);
-      updateItem(index, "unitPrice", unitPrice);
-      updateItem(index, "quantity", quantity);
-      updateItem(index, "total", unitPrice * quantity);
-    }
-  };
+  const selectedCompany = companies.find((c) => c.id === formData.companyId);
 
   const formatCurrency = (amount: number) => {
     return `$${amount.toFixed(2)}`;
@@ -269,21 +218,21 @@ export default function AdminInvoicesPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="userId">Vendor *</Label>
+                    <Label htmlFor="companyId">Company *</Label>
                     <Select
-                      value={formData.userId}
+                      value={formData.companyId}
                       onValueChange={(value) =>
-                        setFormData({ ...formData, userId: value })
+                        setFormData({ ...formData, companyId: value })
                       }
                       required
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select vendor" />
+                        <SelectValue placeholder="Select company" />
                       </SelectTrigger>
                       <SelectContent>
-                        {users.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.company || user.name || user.email}
+                        {companies.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -302,87 +251,31 @@ export default function AdminInvoicesPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dueDate: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Billing Address</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Street"
-                      value={formData.billingAddress.street}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          billingAddress: {
-                            ...formData.billingAddress,
-                            street: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                    <Input
-                      placeholder="City"
-                      value={formData.billingAddress.city}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          billingAddress: {
-                            ...formData.billingAddress,
-                            city: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                    <Input
-                      placeholder="State"
-                      value={formData.billingAddress.state}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          billingAddress: {
-                            ...formData.billingAddress,
-                            state: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                    <Input
-                      placeholder="ZIP"
-                      value={formData.billingAddress.zip}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          billingAddress: {
-                            ...formData.billingAddress,
-                            zip: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                    <Input
-                      placeholder="Country"
-                      value={formData.billingAddress.country}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          billingAddress: {
-                            ...formData.billingAddress,
-                            country: e.target.value,
-                          },
-                        })
-                      }
-                    />
+                {selectedCompany && (
+                  <div className="space-y-2">
+                    <Label>Billing Address (from company)</Label>
+                    <div className="p-3 bg-muted rounded-md text-sm">
+                      {selectedCompany.street && <p>{selectedCompany.street}</p>}
+                      <p>
+                        {[
+                          selectedCompany.city,
+                          selectedCompany.state,
+                          selectedCompany.zip,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                      {selectedCompany.country && <p>{selectedCompany.country}</p>}
+                      {!selectedCompany.street &&
+                        !selectedCompany.city &&
+                        !selectedCompany.state && (
+                          <p className="text-muted-foreground">
+                            No billing address set for this company
+                          </p>
+                        )}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Line Items</Label>
@@ -397,37 +290,15 @@ export default function AdminInvoicesPage() {
                         key={index}
                         className="border p-3 rounded-lg space-y-2"
                       >
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
-                            <Label>Product (optional)</Label>
-                            <Select
-                              value={item.productId || ""}
-                              onValueChange={(value) =>
-                                handleProductSelect(index, value)
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select product" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {products.map((product) => (
-                                  <SelectItem key={product.id} value={product.id}>
-                                    {product.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1">
-                            <Label>Description *</Label>
-                            <Input
-                              value={item.description}
-                              onChange={(e) =>
-                                updateItem(index, "description", e.target.value)
-                              }
-                              required
-                            />
-                          </div>
+                        <div className="space-y-1">
+                          <Label>Description *</Label>
+                          <Input
+                            value={item.description}
+                            onChange={(e) =>
+                              updateItem(index, "description", e.target.value)
+                            }
+                            required
+                          />
                         </div>
                         <div className="grid grid-cols-4 gap-2">
                           <div className="space-y-1">
@@ -537,8 +408,7 @@ export default function AdminInvoicesPage() {
                   <div>
                     <CardTitle>{invoice.invoiceNumber}</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {invoice.user.name || invoice.user.email}
-                      {invoice.user.company && ` • ${invoice.user.company}`}
+                      {invoice.company.name}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -565,8 +435,6 @@ export default function AdminInvoicesPage() {
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
                     Date: {new Date(invoice.invoiceDate).toLocaleDateString()}
-                    {invoice.dueDate &&
-                      ` • Due: ${new Date(invoice.dueDate).toLocaleDateString()}`}
                   </p>
                   <div className="flex gap-2">
                     <Button

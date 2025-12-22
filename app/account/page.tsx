@@ -30,7 +30,6 @@ interface Invoice {
   id: string;
   invoiceNumber: string;
   invoiceDate: string;
-  dueDate?: string | null;
   total: number;
   createdAt: string;
 }
@@ -184,8 +183,6 @@ export default function AccountPage() {
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {new Date(invoice.invoiceDate).toLocaleDateString()}
-                              {invoice.dueDate &&
-                                ` • Due: ${new Date(invoice.dueDate).toLocaleDateString()}`}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">

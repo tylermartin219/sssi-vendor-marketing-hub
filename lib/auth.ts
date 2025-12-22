@@ -18,6 +18,14 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
+          include: {
+            company: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
         });
 
         if (!user || !user.password) {
@@ -35,7 +43,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
-          company: user.company,
+          company: user.company?.name || null,
+          companyId: user.companyId,
         };
       },
     }),
@@ -45,6 +54,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = (user as any).role;
         token.company = (user as any).company;
+        token.companyId = (user as any).companyId;
       }
       return token;
     },
@@ -53,6 +63,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.sub;
         (session.user as any).role = token.role;
         (session.user as any).company = token.company;
+        (session.user as any).companyId = token.companyId;
       }
       return session;
     },

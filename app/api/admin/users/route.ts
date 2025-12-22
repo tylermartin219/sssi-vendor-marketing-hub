@@ -11,13 +11,13 @@ export async function GET() {
     }
 
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        company: true,
-        createdAt: true,
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: {
           select: {
             quotes: true,
@@ -51,15 +51,15 @@ export async function POST(request: Request) {
         name: data.name || null,
         password: hashedPassword,
         role: data.role || "vendor",
-        company: data.company || null,
+        companyId: data.companyId || null,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        company: true,
-        createdAt: true,
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 

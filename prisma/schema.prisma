@@ -10,19 +10,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  street    String?
+  city      String?
+  state     String?
+  zip       String?
+  country   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  invoices Invoice[]
+}
+
 model User {
   id        String   @id @default(cuid())
   name      String?
   email     String   @unique
   password  String?  // hashed password for credentials auth
   role      String   @default("vendor") // "vendor" | "admin"
-  company   String?
+  companyId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  quotes          Quote[]
-  potmApplications POTMApplication[]
-  invoices        Invoice[]
+  company           Company?          @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  quotes            Quote[]
+  potmApplications  POTMApplication[]
 }
 
 model Promotion {
@@ -54,7 +69,6 @@ model Product {
   updatedAt       DateTime @updatedAt
 
   quoteItems QuoteItem[]
-  invoiceItems InvoiceItem[]
 }
 
 model Quote {
@@ -140,25 +154,22 @@ model HomeContent {
 model Invoice {
   id            String        @id @default(cuid())
   invoiceNumber String        @unique
-  userId        String
+  companyId     String
   quoteId       String?       // Optional link to quote
   invoiceDate   DateTime      @default(now())
-  dueDate       DateTime?
-  billingAddress String       @default("{}") // JSON: { street, city, state, zip, country }
   notes         String?
   total         Float         @default(0)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quote Quote?       @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  items InvoiceItem[]
+  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  quote   Quote?       @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  items   InvoiceItem[]
 }
 
 model InvoiceItem {
   id          String   @id @default(cuid())
   invoiceId   String
-  productId   String?  // Optional link to product
   description String
   quantity    Int      @default(1)
   unitPrice   Float
@@ -166,6 +177,5 @@ model InvoiceItem {
   notes       String?
 
   invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 }
 

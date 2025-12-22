@@ -12,8 +12,36 @@ export async function GET() {
 
     const userId = (session.user as any).id;
 
+    // Get user's company
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
+    if (!user?.companyId) {
+      // If user has no company, only show their own quotes
+      const quotes = await prisma.quote.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+      });
+      return NextResponse.json(quotes);
+    }
+
+    // Show all quotes from users in the same company
     const quotes = await prisma.quote.findMany({
-      where: { userId },
+      where: {
+        user: {
+          companyId: user.companyId,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 

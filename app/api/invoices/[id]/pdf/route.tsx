@@ -18,16 +18,16 @@ export async function GET(
 
     const userId = (session.user as any).id;
 
+    // Get user's company
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
     const invoice = await prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-            company: true,
-          },
-        },
+        company: true,
         items: true,
       },
     });
@@ -36,8 +36,11 @@ export async function GET(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
-    // Check if user owns this invoice or is admin
-    if (invoice.userId !== userId && (session.user as any)?.role !== "admin") {
+    // Check if user's company matches invoice company or is admin
+    if (
+      invoice.companyId !== user?.companyId &&
+      (session.user as any)?.role !== "admin"
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -47,9 +50,14 @@ export async function GET(
         invoice={{
           invoiceNumber: invoice.invoiceNumber,
           invoiceDate: invoice.invoiceDate.toISOString(),
-          dueDate: invoice.dueDate?.toISOString() || null,
-          user: invoice.user,
-          billingAddress: invoice.billingAddress,
+          company: {
+            name: invoice.company.name,
+            street: invoice.company.street,
+            city: invoice.company.city,
+            state: invoice.company.state,
+            zip: invoice.company.zip,
+            country: invoice.company.country,
+          },
           items: invoice.items.map((item) => ({
             id: item.id,
             description: item.description,

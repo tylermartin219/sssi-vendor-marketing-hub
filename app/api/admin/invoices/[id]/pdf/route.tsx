@@ -19,13 +19,7 @@ export async function GET(
     const invoice = await prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-            company: true,
-          },
-        },
+        company: true,
         items: true,
       },
     });
@@ -40,9 +34,14 @@ export async function GET(
         invoice={{
           invoiceNumber: invoice.invoiceNumber,
           invoiceDate: invoice.invoiceDate.toISOString(),
-          dueDate: invoice.dueDate?.toISOString() || null,
-          user: invoice.user,
-          billingAddress: invoice.billingAddress,
+          company: {
+            name: invoice.company.name,
+            street: invoice.company.street,
+            city: invoice.company.city,
+            state: invoice.company.state,
+            zip: invoice.company.zip,
+            country: invoice.company.country,
+          },
           items: invoice.items.map((item) => ({
             id: item.id,
             description: item.description,

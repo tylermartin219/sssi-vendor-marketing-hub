@@ -16,7 +16,12 @@ export async function GET() {
           select: {
             name: true,
             email: true,
-            company: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         items: {

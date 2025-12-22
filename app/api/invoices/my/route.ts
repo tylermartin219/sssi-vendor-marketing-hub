@@ -12,18 +12,22 @@ export async function GET() {
 
     const userId = (session.user as any).id;
 
+    // Get user's company
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
+    if (!user?.companyId) {
+      // If user has no company, return empty array
+      return NextResponse.json([]);
+    }
+
+    // Show all invoices for the user's company
     const invoices = await prisma.invoice.findMany({
-      where: { userId },
+      where: { companyId: user.companyId },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+        items: true,
       },
       orderBy: {
         createdAt: "desc",

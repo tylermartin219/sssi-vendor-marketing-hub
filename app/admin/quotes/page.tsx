@@ -26,7 +26,10 @@ interface Quote {
   user: {
     name: string | null;
     email: string;
-    company: string | null;
+    company: {
+      id: string;
+      name: string;
+    } | null;
   };
   items: QuoteItem[];
 }
@@ -91,8 +94,8 @@ export default function AdminQuotesPage() {
                         {quote.name || `Quote #${quote.id.slice(0, 8)}`}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {quote.user.name || quote.user.email}
-                        {quote.user.company && ` • ${quote.user.company}`}
+                        {quote.user.company?.name || quote.user.name || quote.user.email}
+                        {quote.user.name && quote.user.company && ` • ${quote.user.name}`}
                       </p>
                     </div>
                     <Badge

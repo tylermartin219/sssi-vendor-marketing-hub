@@ -18,7 +18,7 @@ export async function PUT(
       email: data.email,
       name: data.name || null,
       role: data.role || "vendor",
-      company: data.company || null,
+      companyId: data.companyId || null,
     };
 
     // Only update password if provided
@@ -30,13 +30,13 @@ export async function PUT(
     const user = await prisma.user.update({
       where: { id: params.id },
       data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        company: true,
-        createdAt: true,
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 

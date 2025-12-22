@@ -6,6 +6,26 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding database...");
 
+  // Create companies
+  const ssCompany = await prisma.company.upsert({
+    where: { id: "seed-sssi-company" },
+    update: {},
+    create: {
+      id: "seed-sssi-company",
+      name: "SS&Si",
+    },
+  });
+
+  const exampleCompany = await prisma.company.upsert({
+    where: { id: "seed-example-company" },
+    update: {},
+    create: {
+      id: "seed-example-company",
+      name: "Example Company",
+    },
+  });
+  console.log("✅ Created companies");
+
   // Create admin user
   const hashedPassword = await bcrypt.hash("admin123", 10);
   const admin = await prisma.user.upsert({
@@ -16,7 +36,7 @@ async function main() {
       name: "Admin User",
       password: hashedPassword,
       role: "admin",
-      company: "SS&Si",
+      companyId: ssCompany.id,
     },
   });
   console.log("✅ Created admin user: admin@sssi.com / admin123");
@@ -31,7 +51,7 @@ async function main() {
       name: "Test Vendor",
       password: vendorPassword,
       role: "vendor",
-      company: "Example Company",
+      companyId: exampleCompany.id,
     },
   });
   console.log("✅ Created vendor user: vendor@example.com / vendor123");

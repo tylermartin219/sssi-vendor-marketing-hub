@@ -130,8 +130,10 @@ export default function AdminProductsPage() {
                     name: "",
                     category: "",
                     description: "",
-                    images: [],
+                    imageUrl: "",
                     coBrandingNotes: "",
+                    price: "",
+                    quantity: "",
                     active: true,
                   });
                 }}

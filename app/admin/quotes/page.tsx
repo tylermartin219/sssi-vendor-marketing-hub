@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 
 interface QuoteItem {
   product: {
@@ -29,8 +32,10 @@ interface Quote {
 }
 
 export default function AdminQuotesPage() {
+  const router = useRouter();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/quotes")
@@ -40,6 +45,29 @@ export default function AdminQuotesPage() {
         setLoading(false);
       });
   }, []);
+
+  const handleCreateInvoice = async (quoteId: string) => {
+    setCreating(quoteId);
+    try {
+      const res = await fetch("/api/admin/invoices/from-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quoteId }),
+      });
+
+      if (res.ok) {
+        const invoice = await res.json();
+        router.push(`/admin/invoices`);
+      } else {
+        alert("Failed to create invoice");
+      }
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      alert("Failed to create invoice");
+    } finally {
+      setCreating(null);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -81,9 +109,22 @@ export default function AdminQuotesPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Submitted: {new Date(quote.createdAt).toLocaleString()}
-                  </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm text-muted-foreground">
+                      Submitted: {new Date(quote.createdAt).toLocaleString()}
+                    </p>
+                    {quote.status === "approved" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCreateInvoice(quote.id)}
+                        disabled={creating === quote.id}
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        {creating === quote.id ? "Creating..." : "Create Invoice"}
+                      </Button>
+                    )}
+                  </div>
                   <div className="space-y-2">
                     {quote.items.map((item, idx) => (
                       <div key={idx} className="text-sm border-l-2 pl-3">

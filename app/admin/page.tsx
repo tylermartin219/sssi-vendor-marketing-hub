@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, Megaphone, Calendar, Image, FileText, ShoppingCart, Users, Home } from "lucide-react";
+import { Package, Megaphone, Calendar, Image, FileText, ShoppingCart, Users, Home, Receipt } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminPage() {
@@ -10,6 +10,7 @@ export default async function AdminPage() {
     promotions: await prisma.promotion.count(),
     products: await prisma.product.count(),
     quotes: await prisma.quote.count(),
+    invoices: await prisma.invoice.count(),
     potmApplications: await prisma.pOTMApplication.count(),
     assets: await prisma.asset.count(),
     resources: await prisma.resource.count(),
@@ -114,6 +115,21 @@ export default async function AdminPage() {
               <p className="text-3xl font-bold">{stats.quotes}</p>
               <Button asChild variant="outline" className="mt-4 w-full">
                 <Link href="/admin/quotes">View All</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Invoices</CardTitle>
+                <Receipt className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{stats.invoices}</p>
+              <Button asChild variant="outline" className="mt-4 w-full">
+                <Link href="/admin/invoices">Manage</Link>
               </Button>
             </CardContent>
           </Card>

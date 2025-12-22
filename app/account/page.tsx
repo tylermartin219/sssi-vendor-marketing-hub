@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download } from "lucide-react";
 
 interface Quote {
   id: string;
@@ -23,10 +26,20 @@ interface POTMApplication {
   createdAt: string;
 }
 
+interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate?: string | null;
+  total: number;
+  createdAt: string;
+}
+
 export default function AccountPage() {
   const { data: session } = useSession();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [applications, setApplications] = useState<POTMApplication[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,9 +47,11 @@ export default function AccountPage() {
       Promise.all([
         fetch("/api/quotes/my").then((res) => res.json()),
         fetch("/api/potm/my-applications").then((res) => res.json()),
-      ]).then(([quotesData, appsData]) => {
+        fetch("/api/invoices/my").then((res) => res.json()),
+      ]).then(([quotesData, appsData, invoicesData]) => {
         setQuotes(quotesData);
         setApplications(appsData);
+        setInvoices(invoicesData);
         setLoading(false);
       });
     }
@@ -92,6 +107,7 @@ export default function AccountPage() {
           <Tabs defaultValue="quotes" className="w-full">
             <TabsList>
               <TabsTrigger value="quotes">Quote Requests</TabsTrigger>
+              <TabsTrigger value="invoices">Invoices</TabsTrigger>
               <TabsTrigger value="applications">POTM Applications</TabsTrigger>
             </TabsList>
 
@@ -134,6 +150,54 @@ export default function AccountPage() {
                           >
                             {quote.status}
                           </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="invoices">
+              <Card>
+                <CardHeader>
+                  <CardTitle>My Invoices</CardTitle>
+                  <CardDescription>
+                    View and download your invoices
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <p>Loading...</p>
+                  ) : invoices.length === 0 ? (
+                    <p className="text-muted-foreground">No invoices yet.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {invoices.map((invoice) => (
+                        <div
+                          key={invoice.id}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
+                          <div>
+                            <p className="font-semibold">
+                              {invoice.invoiceNumber}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(invoice.invoiceDate).toLocaleDateString()}
+                              {invoice.dueDate &&
+                                ` • Due: ${new Date(invoice.dueDate).toLocaleDateString()}`}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">
+                              ${invoice.total.toFixed(2)}
+                            </Badge>
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/invoices/${invoice.id}`}>
+                                View
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>

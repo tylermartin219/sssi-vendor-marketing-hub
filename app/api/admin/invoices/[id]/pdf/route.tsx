@@ -57,7 +57,10 @@ export async function GET(
       />
     );
 
-    return new NextResponse(pdfBuffer, {
+    // Convert Buffer to Uint8Array for NextResponse
+    const pdfArray = new Uint8Array(pdfBuffer);
+
+    return new NextResponse(pdfArray, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`,
